@@ -1,0 +1,6 @@
+[
+    {
+        "caption": "Copy Posgtgres JSON Path",
+        "command": "copy_postgres_json_path"
+    }
+]
