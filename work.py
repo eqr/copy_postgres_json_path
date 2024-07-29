@@ -1,5 +1,3 @@
-import sublime
-import sublime_plugin
 import json
 
 class TreeNode:
@@ -35,7 +33,7 @@ def parse_json_to_tree(json_str):
                     item_end_pos = json_str.find(',', item_start_pos, end_pos)
                 else:
                     item_end_pos = json_str.find(']', item_start_pos, end_pos)
-                child = build_tree(f'{i}', item, item_start_pos, item_end_pos)
+                child = build_tree(f'[{i}]', item, item_start_pos, item_end_pos)
                 node.add_child(child)
                 current_pos = item_end_pos + 1
         else:
@@ -91,33 +89,25 @@ def find_path_by_position(node, position):
     traverse(node, position)
     return path
 
-def format_item(item):
-    if isinstance(item, int):
-        return f'{item}'
-    return f'\'{item}\''
-
-def format_path(path):
-    if len(path) == 0:
-        return ''
-    if len(path) == 1:
-        return (f'->>{format_item(path[0])}')
+if __name__ == '__main__':
+    json_str = '''{
+  "a": "b",
+  "c": {
+    "d": {
+      "e": ["f", "o", {"g": "j"}, "t"],
+      "o": "p"
+    }
+  }
+}
+'''
     
-    return '->' + '->'.join([format_item(item) for item in path[:-1]]) + '->>' + format_item(path[-1])
-
-class CopyPostgresJsonPathCommand(sublime_plugin.TextCommand):
-    def run(self, edit):
-        view = self.view
-        sel = view.sel()[0]
-        file_content = view.substr(sublime.Region(0, view.size()))
-        cursor_position = sel.begin()
-        tree = parse_json_to_tree(file_content)
-        path = find_path_by_position(tree,cursor_position)
-
-        if not path:
-            sublime.status_message("No JSON path found")
-            return
-        path = path[1:] # remove root node
-        formatted_path = format_path(path)        
-        sublime.message_dialog(f"JSON path copied to clipboard: {formatted_path}")
-        sublime.set_clipboard(formatted_path)
-
+    print(json_str)
+    
+    tree = parse_json_to_tree(json_str)
+    print_tree(tree)
+    
+    # Adjust the position to point to the actual value, not the quote
+    position = json_str.find('"t"') + 1  # Example position for "p"
+    print(position)
+    path = find_path_by_position(tree, position)
+    print("Path to element at position", position, ":", " -> ".join(path))
