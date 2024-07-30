@@ -91,18 +91,33 @@ def find_path_by_position(node, position):
     traverse(node, position)
     return path
 
+def find_value_by_position(node, position):
+    value = None
+
+    def traverse(node, position):
+        nonlocal value
+        if node.start_pos <= position <= node.end_pos:
+            value = node.value
+            for child in node.children:
+                traverse(child, position)
+
+    traverse(node, position)
+    return value
+
 def format_item(item):
     if isinstance(item, int):
         return f'{item}'
     return f'\'{item}\''
 
-def format_path(path):
+def format_path(path, val):
     if len(path) == 0:
         return ''
     if len(path) == 1:
-        return (f'->>{format_item(path[0])}')
-    
-    return '->' + '->'.join([format_item(item) for item in path[:-1]]) + '->>' + format_item(path[-1])
+        p = (f'->>{format_item(path[0])}')
+    else: 
+        p = '->' + '->'.join([format_item(item) for item in path[:-1]]) + '->>' + format_item(path[-1])
+
+    return p + f' = \'{val}\''
 
 class CopyPostgresJsonPathCommand(sublime_plugin.TextCommand):
     def run(self, edit):
@@ -117,7 +132,8 @@ class CopyPostgresJsonPathCommand(sublime_plugin.TextCommand):
             sublime.status_message("No JSON path found")
             return
         path = path[1:] # remove root node
-        formatted_path = format_path(path)        
+        val = find_value_by_position(tree, cursor_position)
+
+        formatted_path = format_path(path, val)        
         sublime.message_dialog(f"JSON path copied to clipboard: {formatted_path}")
         sublime.set_clipboard(formatted_path)
-
